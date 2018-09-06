@@ -52,11 +52,13 @@ data class Factory<T>(val isSingleton: Boolean, val definition: () -> T) {
 
 class NoFactoryFoundException(clazz: KClass<*>) : Exception("No factory registered for $clazz")
 
-open class Scope(private val parent: Scope? = null) {
+open class Scope {
 
+    private var parent: Scope? = null
     private var modules: List<Module> = listOf()
 
-    fun init(modules: List<Module>): Scope {
+    fun init(modules: List<Module>, parent: Scope? = null): Scope {
+        this.parent = parent
         this.modules = modules
         modules.forEach { it.scope = this }
         return this

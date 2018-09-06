@@ -1,7 +1,6 @@
 package example.di
 
 import android.content.Context
-import di.GlobalScope
 import di.Module
 import di.Scope
 import di.module
@@ -20,6 +19,6 @@ fun secondScreenModule() = module {
     factory { FirstPresenter(get()) }
 }
 
-class MainActivityScope: Scope(GlobalScope)
+class MainActivityScope: Scope()
 
-class SecondActivityScope: Scope(GlobalScope)
+class SecondActivityScope: Scope()
