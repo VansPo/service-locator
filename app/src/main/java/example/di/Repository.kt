@@ -11,7 +11,8 @@ interface Repository {
 
 class StringRepository(
     context: Context,
-    private val random: Random
+    private val random: Random,
+    private val header: String
 ) : Repository {
 
     private val strings: List<String> =
@@ -27,5 +28,6 @@ class StringRepository(
         Log.d("DI", "${StringRepository::class} init was called!")
     }
 
-    override fun provideHelloWorldString(): String = strings[random.nextInt(strings.size)]
+    override fun provideHelloWorldString(): String =
+        "$header: ${strings[random.nextInt(strings.size)]}"
 }
