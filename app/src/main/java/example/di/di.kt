@@ -1,27 +1,38 @@
 package example.di
 
-import android.content.Context
-import android.util.Log
-import di.Module
-import di.Scope
-import di.module
-import java.util.Random
+import di.example.kodi.Module
+import di.example.kodi.module
+import example.di.data.ImageInteractor
+import example.di.data.ImageRepository
+import example.di.data.ImageService
+import example.di.data.ImageStorage
+import example.di.ui.MainPresenter
+import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import retrofit2.converter.gson.GsonConverterFactory
 
-fun mainModule(context: Context): Module = module {
-    bean { StringRepository(context, get(), get("second")) as Repository }
-    bean { Random() }
-    factory("first") {
-        Log.d("DI", "first string factory called")
-        "First header"
-    }
-    bean("second") {
-        Log.d("DI", "second string factory called")
-        "Second header"
-    }
+fun dataModule(): Module = module {
+    singleton { ImageStorage() }
+    singleton { provideImageService(get("endpoint")) }
+    factory("endpoint") { "https://api.thecatapi.com/v1/" }
+    factory("pageSize") { 20 }
 }
 
-fun mainScreenModule() = module {
-    bean { FirstPresenter(get()) }
+fun provideImageService(endpoint: String): ImageService {
+    val retrofit = Retrofit.Builder()
+        .baseUrl(endpoint)
+        .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    return retrofit.create<ImageService>(ImageService::class.java)
 }
 
-class MainActivityScope : Scope()
+fun domainModule(): Module = module {
+    singleton { ImageInteractor(get()) }
+    singleton { ImageRepository(get(), get(), get("pageSize")) }
+}
+
+fun uiModule(): Module = module {
+    singleton { MainPresenter(get()) }
+}
