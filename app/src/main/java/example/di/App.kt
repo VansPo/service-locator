@@ -1,13 +1,15 @@
 package example.di
 
 import android.app.Application
-import di.GlobalScope
+import di.example.kodi.Component
 
 class App : Application() {
 
+    lateinit var appComponent: Component
+
     override fun onCreate() {
         super.onCreate()
-        GlobalScope.init(listOf(mainModule(this)))
+        appComponent = Component()
+            .init(modules = listOf(dataModule(), domainModule()))
     }
-
 }
