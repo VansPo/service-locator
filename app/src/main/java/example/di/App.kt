@@ -2,14 +2,14 @@ package example.di
 
 import android.app.Application
 import di.example.kodi.Component
+import di.example.kodi.Injectable
 
-class App : Application() {
+class App : Application(), Injectable {
 
-    lateinit var appComponent: Component
+    override val component: Component = Component()
 
     override fun onCreate() {
         super.onCreate()
-        appComponent = Component()
-            .init(modules = listOf(dataModule(), domainModule()))
+        component.init(modules = listOf(dataModule(), domainModule()))
     }
 }

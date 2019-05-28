@@ -3,23 +3,22 @@ package example.di.ui
 import android.app.Activity
 import android.os.Bundle
 import android.support.v7.widget.GridLayoutManager
-import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import di.example.kodi.Component
+import di.example.kodi.Injectable
 import di.example.kodi.inject
-import example.di.App
 import example.di.R
 import example.di.data.model.Image
 import example.di.uiModule
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.activity_main.recycler
+import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : Activity() {
+class MainActivity : Activity(), Injectable {
 
-    private val activityComponent: Component = Component()
-    private val presenter: MainPresenter by inject(activityComponent)
+    override val component: Component = Component()
+    private val presenter: MainPresenter by inject()
 
     private val adapter = ImageAdapter()
 
@@ -28,8 +27,8 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val appComponent = (application as App).appComponent
-        activityComponent.init(appComponent, listOf(uiModule()))
+        val appComponent = (application as Injectable).component
+        component.init(appComponent, listOf(uiModule()))
 
         recycler.layoutManager = GridLayoutManager(this, 2)
         recycler.adapter = adapter
