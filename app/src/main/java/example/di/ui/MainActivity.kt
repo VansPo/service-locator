@@ -28,7 +28,7 @@ class MainActivity : Activity(), Injectable {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val appComponent = (application as Injectable).component
-        component.init(appComponent, listOf(uiModule()))
+        component.init(appComponent, setOf(uiModule()))
 
         recycler.layoutManager = GridLayoutManager(this, 2)
         recycler.adapter = adapter

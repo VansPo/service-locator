@@ -10,6 +10,6 @@ class App : Application(), Injectable {
 
     override fun onCreate() {
         super.onCreate()
-        component.init(modules = listOf(dataModule(), domainModule()))
+        component.init(modules = setOf(dataModule(), domainModule()))
     }
 }

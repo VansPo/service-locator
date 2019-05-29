@@ -4,70 +4,87 @@ import java.lang.Exception
 import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
-class Module {
-
-    lateinit var component: Component
+class Module internal constructor(
+    private val childModules: Set<Module> = setOf()
+) {
+    internal var component: Component = Component()
+        set(value) {
+            field = value
+            value.addModules(childModules)
+        }
     private val instanceMap: MutableMap<Definition, Any> = mutableMapOf()
     private val factoryMap: MutableMap<Definition, Factory<*>> = mutableMapOf()
 
     inline fun <reified T : Any> singleton(name: String = "", noinline creator: () -> T) =
-        provide(true, Definition(name, T::class), creator)
+        provide(true, name, T::class, creator)
 
     inline fun <reified T : Any> factory(name: String = "", noinline creator: () -> T) =
-        provide(false, Definition(name, T::class), creator)
+        provide(false, name, T::class, creator)
 
-    fun <T> provide(
+    fun <T : Any> provide(
         isSingleton: Boolean,
-        definition: Definition,
+        name: String = "",
+        type: KClass<T>,
         creator: () -> T
     ) {
+        val definition = Definition(name, type)
         factoryMap[definition] = Factory(isSingleton, creator)
     }
 
-    inline fun <reified T : Any> get(name: String = ""): T {
-        val definition = Definition(name, T::class)
-        val factory = component.resolveFactory<T>(definition)
-        return component.resolveInstance(factory, definition)
+    inline fun <reified T : Any> get(name: String = ""): T = get(name, T::class)
+
+    fun <T : Any> get(name: String = "", type: KClass<T>): T {
+        return component.get(name, type)
     }
 
-    fun <T> resolveFactory(definition: Definition): Factory<T> =
+    internal fun <T> resolveFactory(definition: Definition): Factory<T> =
         factoryMap[definition] as Factory<T>?
             ?: throw NoFactoryFoundException(definition.type)
 
-    fun <T : Any> resolveInstance(factory: Factory<T>, definition: Definition): T =
+    internal fun <T : Any> resolveInstance(factory: Factory<T>, definition: Definition): T =
         if (factory.isSingleton) {
             instanceMap.getOrPut(definition) { factory.instance() } as T
         } else {
             factory.instance()
         }
 
-    fun hasDefinition(definition: Definition) = factoryMap.contains(definition)
+    internal fun hasDefinition(definition: Definition) = factoryMap.contains(definition)
+
+    override fun equals(other: Any?) = factoryMap == other
 }
 
-data class Factory<T>(val isSingleton: Boolean, val creator: () -> T) {
+internal data class Factory<T>(val isSingleton: Boolean, val creator: () -> T) {
     fun instance(): T = creator.invoke()
 }
 
-data class Definition(val name: String, val type: KClass<*>)
+internal data class Definition(val name: String, val type: KClass<*>)
 
 class Component {
 
     private var parent: Component? = null
-    private val modules: MutableList<Module> = mutableListOf()
+    private val modules: MutableSet<Module> = mutableSetOf()
 
-    fun init(parent: Component? = null, modules: List<Module>): Component = apply {
+    fun init(parent: Component? = null, modules: Set<Module>): Component = apply {
         this.parent = parent
-        this.modules += modules
-        this.modules.forEach { it.component = this }
+        addModules(modules)
     }
 
-    fun <T : Any> get(definition: Definition): T =
-        resolveInstance(resolveFactory(definition), definition)
+    inline fun <reified T : Any> get(name: String = ""): T = get(name, T::class)
 
-    fun <T : Any> resolveFactory(definition: Definition): Factory<T> =
+    fun <T : Any> get(name: String = "", type: KClass<T>): T {
+        val definition = Definition(name, type)
+        return resolveInstance(resolveFactory(definition), definition)
+    }
+
+    internal fun addModules(modules: Set<Module>) {
+        modules.forEach { it.component = this }
+        this.modules += modules
+    }
+
+    private fun <T : Any> resolveFactory(definition: Definition): Factory<T> =
         resolveFactoryInternal(definition) ?: throw NoFactoryFoundException(definition.type)
 
-    fun <T : Any> resolveInstance(factory: Factory<T>, definition: Definition): T =
+    private fun <T : Any> resolveInstance(factory: Factory<T>, definition: Definition): T =
         resolveInstanceInternal(factory, definition)
             ?: throw NoFactoryFoundException(definition.type)
 
