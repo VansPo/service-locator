@@ -1,5 +1,6 @@
 package example.di
 
+import android.util.Log
 import di.example.kodi.Module
 import di.example.kodi.module
 import example.di.data.ImageInteractor
@@ -12,12 +13,18 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
 fun constantsModule() = module {
-    factory("endpoint") { "https://api.thecatapi.com/v1/" }
-    factory("pageSize") { 20 }
+    factory("endpoint") {
+        Log.d("KODI", "endpoint factory called")
+        "https://api.thecatapi.com/v1/"
+    }
+    singleton("pageSize") {
+        Log.d("KODI", "pageSize factory called")
+        20
+    }
 }
 
 fun dataModule(): Module = module(dependsOn = setOf(constantsModule())) {
-    singleton { ImageStorage() }
+    singleton { ImageStorage(get("endpoint"), get("pageSize")) }
     singleton { provideImageService(get("endpoint")) }
 }
 

@@ -1,4 +1,3 @@
 package example.di.data
 
-class ImageStorage {
-}
+data class ImageStorage(val string: String, val pageSize: Int)
