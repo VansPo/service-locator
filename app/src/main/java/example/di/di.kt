@@ -11,12 +11,12 @@ import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
-val constantsModule = module {
+fun constantsModule() = module {
     factory("endpoint") { "https://api.thecatapi.com/v1/" }
     factory("pageSize") { 20 }
 }
 
-fun dataModule(): Module = module(dependsOn = setOf(constantsModule)) {
+fun dataModule(): Module = module(dependsOn = setOf(constantsModule())) {
     singleton { ImageStorage() }
     singleton { provideImageService(get("endpoint")) }
 }
@@ -31,7 +31,7 @@ fun provideImageService(endpoint: String): ImageService {
     return retrofit.create<ImageService>(ImageService::class.java)
 }
 
-fun domainModule(): Module = module(dependsOn = setOf(constantsModule)) {
+fun domainModule(): Module = module(dependsOn = setOf(constantsModule())) {
     singleton { ImageInteractor(get()) }
     singleton { ImageRepository(get(), get(), get("pageSize")) }
 }

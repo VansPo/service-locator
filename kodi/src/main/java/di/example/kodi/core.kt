@@ -8,10 +8,6 @@ class Module internal constructor(
     private val childModules: Set<Module> = setOf()
 ) {
     internal var component: Component = Component()
-        set(value) {
-            field = value
-            value.addModules(childModules)
-        }
     private val instanceMap: MutableMap<Definition, Any> = mutableMapOf()
     private val factoryMap: MutableMap<Definition, Factory<*>> = mutableMapOf()
 
@@ -33,13 +29,10 @@ class Module internal constructor(
 
     inline fun <reified T : Any> get(name: String = ""): T = get(name, T::class)
 
-    fun <T : Any> get(name: String = "", type: KClass<T>): T {
-        return component.get(name, type)
-    }
+    fun <T : Any> get(name: String = "", type: KClass<T>): T = component.get(name, type)
 
     internal fun <T> resolveFactory(definition: Definition): Factory<T> =
-        factoryMap[definition] as Factory<T>?
-            ?: throw NoFactoryFoundException(definition.type)
+        factoryMap[definition] as Factory<T>? ?: throw NoFactoryFoundException(definition.type)
 
     internal fun <T : Any> resolveInstance(factory: Factory<T>, definition: Definition): T =
         if (factory.isSingleton) {
@@ -48,9 +41,22 @@ class Module internal constructor(
             factory.instance()
         }
 
-    internal fun hasDefinition(definition: Definition) = factoryMap.contains(definition)
+    internal fun findModule(definition: Definition): Module? {
+        if (factoryMap.contains(definition)) {
+            return this
+        }
+        childModules.forEach {
+            val module = it.findModule(definition)
+            if (module != null) {
+                return module
+            }
+        }
+        return null
+    }
 
     override fun equals(other: Any?) = factoryMap == other
+
+    override fun hashCode() = factoryMap.hashCode()
 }
 
 internal data class Factory<T>(val isSingleton: Boolean, val creator: () -> T) {
@@ -66,52 +72,28 @@ class Component {
 
     fun init(parent: Component? = null, modules: Set<Module>): Component = apply {
         this.parent = parent
-        addModules(modules)
+        modules.forEach { it.component = this }
+        this.modules += modules
     }
 
     inline fun <reified T : Any> get(name: String = ""): T = get(name, T::class)
 
     fun <T : Any> get(name: String = "", type: KClass<T>): T {
         val definition = Definition(name, type)
-        return resolveInstance(resolveFactory(definition), definition)
-    }
-
-    internal fun addModules(modules: Set<Module>) {
-        modules.forEach { it.component = this }
-        this.modules += modules
-    }
-
-    private fun <T : Any> resolveFactory(definition: Definition): Factory<T> =
-        resolveFactoryInternal(definition) ?: throw NoFactoryFoundException(definition.type)
-
-    private fun <T : Any> resolveInstance(factory: Factory<T>, definition: Definition): T =
-        resolveInstanceInternal(factory, definition)
+        val module = findModule(definition)
+        return module?.resolveInstance(module.resolveFactory<T>(definition), definition)
             ?: throw NoFactoryFoundException(definition.type)
-
-    private fun <T : Any> resolveFactoryInternal(definition: Definition): Factory<T>? {
-        val factory = modules
-            .firstOrNull { it.hasDefinition(definition) }
-            ?.resolveFactory<T>(definition)
-
-        if (factory != null) {
-            return factory
-        }
-
-        return parent?.resolveFactoryInternal(definition)
     }
 
-    private fun <T : Any> resolveInstanceInternal(factory: Factory<T>, definition: Definition): T? {
-        val instance = modules
-            .firstOrNull { it.hasDefinition(definition) }
-            ?.resolveInstance(factory, definition)
-
-        if (instance != null) {
-            return instance
+    private fun findModule(definition: Definition): Module? {
+        modules.forEach {
+            val module = it.findModule(definition)
+            if (module != null) {
+                return module
+            }
         }
-
-        return parent?.resolveInstanceInternal(factory, definition)
+        return parent?.findModule(definition)
     }
-
 }
 
-class NoFactoryFoundException(type: KClass<*>) : Exception("No factory registered for $type")
+class NoFactoryFoundException(type: KClass<*>) : Exception("No factory found for $type")
