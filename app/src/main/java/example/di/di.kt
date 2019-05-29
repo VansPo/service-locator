@@ -28,6 +28,15 @@ fun dataModule(): Module = module(dependsOn = setOf(constantsModule())) {
     singleton { provideImageService(get("endpoint")) }
 }
 
+fun domainModule(): Module = module(dependsOn = setOf(constantsModule())) {
+    singleton { ImageInteractor(get()) }
+    singleton { ImageRepository(get(), get(), get("pageSize")) }
+}
+
+fun uiModule(): Module = module {
+    singleton { MainPresenter(get()) }
+}
+
 fun provideImageService(endpoint: String): ImageService {
     val retrofit = Retrofit.Builder()
         .baseUrl(endpoint)
@@ -36,13 +45,4 @@ fun provideImageService(endpoint: String): ImageService {
         .build()
 
     return retrofit.create<ImageService>(ImageService::class.java)
-}
-
-fun domainModule(): Module = module(dependsOn = setOf(constantsModule())) {
-    singleton { ImageInteractor(get()) }
-    singleton { ImageRepository(get(), get(), get("pageSize")) }
-}
-
-fun uiModule(): Module = module {
-    singleton { MainPresenter(get()) }
 }
