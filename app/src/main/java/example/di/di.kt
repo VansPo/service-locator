@@ -1,8 +1,8 @@
 package example.di
 
 import android.util.Log
-import di.example.kodi.Module
-import di.example.kodi.module
+import com.vans.di.Module
+import com.vans.di.module
 import example.di.data.ImageInteractor
 import example.di.data.ImageRepository
 import example.di.data.ImageService
@@ -17,24 +17,26 @@ fun constantsModule() = module {
         Log.d("KODI", "endpoint factory called")
         "https://api.thecatapi.com/v1/"
     }
-    singleton("pageSize") {
+    single("pageSize") {
         Log.d("KODI", "pageSize factory called")
         20
     }
 }
 
-fun dataModule(): Module = module(dependsOn = setOf(constantsModule())) {
-    singleton { ImageStorage(get("endpoint"), get("pageSize")) }
-    singleton { provideImageService(get("endpoint")) }
-}
+fun dataModule(): Module =
+    module(dependsOn = setOf(constantsModule())) {
+        single { ImageStorage(get("endpoint"), get("pageSize")) }
+        single { provideImageService(get("endpoint")) }
+    }
 
-fun domainModule(): Module = module(dependsOn = setOf(constantsModule())) {
-    singleton { ImageInteractor(get()) }
-    singleton { ImageRepository(get(), get(), get("pageSize")) }
-}
+fun domainModule(): Module =
+    module(dependsOn = setOf(constantsModule())) {
+        single { ImageInteractor(get()) }
+        single { ImageRepository(get(), get(), get("pageSize")) }
+    }
 
 fun uiModule(): Module = module {
-    singleton { MainPresenter(get()) }
+    single { MainPresenter(get()) }
 }
 
 fun provideImageService(endpoint: String): ImageService {

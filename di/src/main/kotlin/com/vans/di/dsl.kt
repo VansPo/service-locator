@@ -1,4 +1,4 @@
-package di.example.kodi
+package com.vans.di
 
 fun module(
     dependsOn: Set<Module> = setOf(),

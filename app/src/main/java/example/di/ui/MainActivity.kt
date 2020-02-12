@@ -4,9 +4,9 @@ import android.app.Activity
 import android.os.Bundle
 import android.support.v7.widget.GridLayoutManager
 import android.util.Log
-import di.example.kodi.Component
-import di.example.kodi.Injectable
-import di.example.kodi.inject
+import com.vans.di.Component
+import com.vans.di.Injectable
+import com.vans.di.inject
 import example.di.R
 import example.di.data.model.Image
 import example.di.uiModule
@@ -17,7 +17,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : Activity(), Injectable {
 
-    override val component: Component = Component()
+    override val component: Component =
+        Component()
     private val presenter: MainPresenter by inject()
 
     private val adapter = ImageAdapter()

@@ -1,1 +1,1 @@
-include ':app', ':di', ':kodi'
+include ':app', ':di'
