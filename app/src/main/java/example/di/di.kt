@@ -13,11 +13,11 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
 fun constantsModule() = module {
-    factory("endpoint") {
+    factory(ConstantQualifier.Endpoint) {
         Log.d("KODI", "endpoint factory called")
         "https://api.thecatapi.com/v1/"
     }
-    single("pageSize") {
+    single(ConstantQualifier.PageSize) {
         Log.d("KODI", "pageSize factory called")
         20
     }
@@ -25,14 +25,14 @@ fun constantsModule() = module {
 
 fun dataModule(): Module =
     module(dependsOn = setOf(constantsModule())) {
-        single { ImageStorage(get("endpoint"), get("pageSize")) }
-        single { provideImageService(get("endpoint")) }
+        single { ImageStorage(get(ConstantQualifier.Endpoint), get(ConstantQualifier.PageSize)) }
+        single { provideImageService(get(ConstantQualifier.Endpoint)) }
     }
 
 fun domainModule(): Module =
     module(dependsOn = setOf(constantsModule())) {
         single { ImageInteractor(get()) }
-        single { ImageRepository(get(), get(), get("pageSize")) }
+        single { ImageRepository(get(), get(), get(ConstantQualifier.PageSize)) }
     }
 
 fun uiModule(): Module = module {

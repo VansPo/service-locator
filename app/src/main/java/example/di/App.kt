@@ -11,6 +11,6 @@ class App : Application(), Injectable {
 
     override fun onCreate() {
         super.onCreate()
-        component.init(modules = setOf(dataModule(), domainModule()))
+        component.init(moduleSet = setOf(dataModule(), domainModule()))
     }
 }
